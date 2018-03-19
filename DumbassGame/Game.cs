@@ -164,12 +164,13 @@ class Game
         else if (input == "help")
         {
             WriteToConsole("host - host a game on your pc");
+            WriteToConsole("say [message] - send a message to the other player");
             WriteToConsole("connect [ip] - connect to the ip");
             WriteToConsole("spells - show all your remaining spells");
             WriteToConsole("hp - show your remaining hp");
             WriteToConsole("[spell] - cast the selected spell");
             WriteToConsole("disconnect - end the connection");
-            WriteToConsole("deck [.deck file]- load a different deck");
+            WriteToConsole("deck [.deck file(without .deck)]- load a different deck");
             WriteToConsole("restart - restart the game");
         }
         else if (mode == 3 && !remainingCards.Contains(input))
@@ -295,7 +296,7 @@ class Game
     {
         int loss = Math.Max(deck[reccard][0] - deck[sendcard][1], 0); // I | Ii | II | I_
         hp -= loss;
-        int eloss = Math.Max(deck[reccard][1] - deck[sendcard][0], 0);
+        int eloss = Math.Max(deck[sendcard][0] - deck[reccard][1], 0);
         enemyHp -= eloss;
         WriteToConsole("You used " + sendcard + ", your enemy lost " + eloss + " HP");
         WriteToConsole("Your enemy used " + reccard + ", you lost " + loss + " HP");
