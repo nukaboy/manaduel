@@ -12,7 +12,7 @@ class Game
 {
     static string deckname = "basic";
     static bool host = false;
-    static int mode = 0; //0=start 1=connected 2=hash ok 3=waiting for input 4=waiting for result
+    static int mode = 0; //0=start 1=connected 2=hash ok 3=waiting for input 4=waiting for result 9 = ded
     static Dictionary<string, int[]> deck;
     static int hp = 10, enemyHp = 10;
     static List<string> remainingCards;
@@ -23,7 +23,7 @@ class Game
     static TcpClient client;
     static IPAddress addr = IPAddress.Any;
     static NetworkStream stream;
-
+    static bool restartMe, RestartOther;
     static void Main(string[] args)
     {
         try
@@ -58,12 +58,22 @@ class Game
 
     static void PrepareRound()
     {
+        restartMe = false;
+        RestartOther = false;
         remainingCards = new List<string>(deck.Keys);
+        enemyHp = 10;
         hp = 10;
+        mode = 3;
+        WriteToConsole("Restartet");
+        WriteToConsole("THE DUEL HAS BEGUN!");
+
+
     }
 
     static void LoadDeck()
     {
+        if (mode != 0)
+            return;
         string d = ReadFile(deckname + ".deck");
         string[] deckFileLines = d.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
         deck = new Dictionary<string, int[]>();
@@ -81,9 +91,21 @@ class Game
     {
         input = input.ToLower();
         string[] inputDiv = input.Split(' ');
-        if (mode == 0 && input == "host")
+        if (mode != 0 && input == "disconnect")
+        {
+            EndConnection();
+        }
+        else if (mode == 0 && input == "host")
         {
             Host();
+        }
+        else if (input == "restart")
+        {
+            restartMe = true;
+            if (restartMe && RestartOther)
+                PrepareRound();
+            else
+                SendData("restart");
         }
         else if (mode == 0 && inputDiv[0].ToLower() == "connect")
         {
@@ -138,6 +160,17 @@ class Game
         else if (input == "hp")
         {
             WriteToConsole(hp + "");
+        }
+        else if (input == "help")
+        {
+            WriteToConsole("host - host a game on your pc");
+            WriteToConsole("connect [ip] - connect to the ip");
+            WriteToConsole("spells - show all your remaining spells");
+            WriteToConsole("hp - show your remaining hp");
+            WriteToConsole("[spell] - cast the selected spell");
+            WriteToConsole("disconnect - end the connection");
+            WriteToConsole("deck [.deck file]- load a different deck");
+            WriteToConsole("restart - restart the game");
         }
         else if (mode == 3 && !remainingCards.Contains(input))
         {
@@ -225,8 +258,10 @@ class Game
             {
                 if (msg == "" + deckHash)
                 {
-                    WriteToConsole("Deck is ok");
+                    WriteToConsole("Deck is the same");
                     mode = 3;
+                    WriteToConsole("THE DUEL HAS BEGUN!");
+
                 }
                 else
                 {
@@ -245,6 +280,15 @@ class Game
                     CalcWin();
                 }
             }
+            if (msg == "restart")
+            {
+                RestartOther = true;
+                if (restartMe && RestartOther)
+                    PrepareRound();
+                else
+                    WriteToConsole("The other player wants to restart, type restart to restart");
+
+            }
         }
     }
     static void CalcWin()
@@ -259,21 +303,25 @@ class Game
         sendcard = null;
         if (hp <= 0 && enemyHp <= 0)
         {
-            WriteToConsole("You are both dead");
+            WriteToConsole("You are both dead, type restart to restart");
+            mode = 9;
         }
         else if (hp <= 0)
         {
-            WriteToConsole("You are dead");
+            WriteToConsole("You are dead, type restart to restart");
+            mode = 9;
         }
         else if (enemyHp <= 0)
         {
-            WriteToConsole("Your enemy is dead");
+            WriteToConsole("Your enemy is dead, type restart to restart");
+            mode = 9;
         }
     }
 
     static void EndConnection()
     {
         client.Dispose();
+        stream.Close();
         mode = 0;
     }
 }
