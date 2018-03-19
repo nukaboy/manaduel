@@ -6,5 +6,5 @@ Each player starts with the same deck of spells, then every round each player ca
 Host a game with "host", connect with "connect [ip]".
 Use "help" to get a list of all commands.
 
-Its very easy to create your own deck of cards, just create a .deck file and load it with "deck [filename]".
+Its very easy to create your own deck of cards, just create a .deck file in the same directory as the exe and load it with "deck [filename]".
 Each spell is a line looking like "Name of the spell#Attack value#Defense value". Both players need the same deck to play.
